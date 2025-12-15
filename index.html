@@ -316,7 +316,7 @@ Accountability required
   </div>
 </div>
 <script>
-class CopyRTE {
+class CopyTool {
   constructor() {
     this.editor = null;
     this.currentNoteId = null;
@@ -918,7 +918,7 @@ focusInsideBlock(blockElement) {
 
 // Start
 document.addEventListener('DOMContentLoaded', () => {
-  window.app = new CopyRTE();
+  window.app = new CopyTool();
   window.app.init();
 });
 </script>
