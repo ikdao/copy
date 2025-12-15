@@ -1,4 +1,18 @@
-class CopyRTE {
+/* Ikdao Copy Tool Script File */
+
+/* Self License - https://legal.ikdao.org/self-license/
+
+Zero One One License - 011SL
+
+Ikdao Copy Script - [Hemang Tewari]
+
+No terms & conditions 
+Attribution required
+Accountability required
+
+*/
+
+class CopyTool {
   constructor() {
     this.editor = null;
     this.currentNoteId = null;
@@ -294,47 +308,87 @@ class CopyRTE {
   }
 
   // ========== FORMATTING ==========
-  toggleInline(tagName) {
-    const range = this.saveCurrentRange();
-    if (!range) return;
+// ========== FORMATTING ==========
+toggleInline(tagName) {
+  const range = this.saveCurrentRange();
+  if (!range) return;
 
-    if (range.collapsed) {
-      const empty = document.createElement(tagName);
-      empty.innerHTML = '\u200B';
-      this.insertNodeUsingRange(empty, range);
-      return;
-    }
-
-    const wrapper = document.createElement(tagName);
-    wrapper.appendChild(range.extractContents());
-    range.insertNode(wrapper);
-    this.placeCaretAfter(wrapper);
+  if (range.collapsed) {
+    const empty = document.createElement(tagName);
+    empty.innerHTML = '\u200B';
+    this.insertNodeUsingRange(empty, range);
+    return;
   }
 
-  formatBlock(tagName) {
-    const range = this.saveCurrentRange();
-    let newBlock = document.createElement(tagName);
-    if (range && !range.collapsed) {
-      newBlock.appendChild(range.extractContents());
-    } else {
-      newBlock.innerHTML = '\u200B';
-    }
-    this.insertNodeUsingRange(newBlock, range);
+  const wrapper = document.createElement(tagName);
+  wrapper.appendChild(range.extractContents());
+  range.insertNode(wrapper);
+  this.placeCaretAfter(wrapper);
+}
+
+// ✅ FIXED: Place caret INSIDE the block
+formatBlock(tagName) {
+  const range = this.saveCurrentRange();
+  const newBlock = document.createElement(tagName);
+
+  if (range && !range.collapsed) {
+    newBlock.appendChild(range.extractContents());
+  } else {
+    newBlock.innerHTML = '\u200B';
   }
 
-  toggleList(listType) {
-    const range = this.saveCurrentRange();
-    const newBlock = document.createElement(listType);
-    const li = document.createElement('li');
-    if (range && !range.collapsed) {
-      li.appendChild(range.extractContents());
-    } else {
-      li.innerHTML = '\u200B';
-    }
-    newBlock.appendChild(li);
-    this.insertNodeUsingRange(newBlock, range);
+  if (range) {
+    range.deleteContents();
+    range.insertNode(newBlock);
+  } else {
+    this.editor.appendChild(newBlock);
   }
 
+  // ✅ Place caret INSIDE the block (at the zero-width space)
+  this.focusInsideBlock(newBlock);
+}
+
+// ✅ FIXED: Place caret inside <li>
+toggleList(listType) {
+  const range = this.saveCurrentRange();
+  const newBlock = document.createElement(listType);
+  const li = document.createElement('li');
+
+  if (range && !range.collapsed) {
+    li.appendChild(range.extractContents());
+  } else {
+    li.innerHTML = '\u200B';
+  }
+
+  newBlock.appendChild(li);
+
+  if (range) {
+    range.deleteContents();
+    range.insertNode(newBlock);
+  } else {
+    this.editor.appendChild(newBlock);
+  }
+
+  // ✅ Focus inside the <li>
+  this.focusInsideBlock(li);
+}
+
+// ✅ NEW HELPER: Focus inside a block element
+focusInsideBlock(blockElement) {
+  const sel = window.getSelection();
+  const range = document.createRange();
+  
+  // Find the text node or use the element
+  let target = blockElement;
+  if (blockElement.firstChild && blockElement.firstChild.nodeType === Node.TEXT_NODE) {
+    target = blockElement.firstChild;
+  }
+
+  range.selectNodeContents(target);
+  range.collapse(false); 
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
   // ========== MODAL ==========
   showModal(config) {
     // Optional: blur editor
@@ -560,6 +614,6 @@ class CopyRTE {
 
 // Start
 document.addEventListener('DOMContentLoaded', () => {
-  window.app = new CopyRTE();
+  window.app = new CopyTool();
   window.app.init();
 });
